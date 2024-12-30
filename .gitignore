@@ -1,0 +1,4 @@
+*.pkl
+*.db
+*.txt
+.env
