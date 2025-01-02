@@ -51,41 +51,7 @@ const Signup = () => {
     academicHistory: '',
     careerAspirations: '',
     preferences: '',
-  });
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-  
-    const formDataToSend = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      skills: formData.skills.map((skill) => skill.value || skill),
-      position: formData.position?.value || '',
-      resume: formData.resume || null,
-      academicHistory: formData.academicHistory,
-      careerAspirations: formData.careerAspirations,
-      preferences: formData.preferences,
-    };
-    
-  
-    try {
-      const response = await fetch('http://localhost:5000/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formDataToSend),
-      });
-  
-      if (response.ok) {
-        alert('Profile saved successfully!');
-      } else {
-        const errorData = await response.json();
-        alert(`Failed to save profile: ${errorData.error}`);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error occurred while saving the profile.');
-    }
-  };
-  
+  });  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -107,27 +73,46 @@ const Signup = () => {
     });
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    const formData = new FormData();
-    formData.append('resume', file);
+  const handleFileChange = (e) => {
+    setFormData({
+      ...formData,
+      resume: e.target.files[0],
+    });
+  };
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const data = new FormData();
+    data.append('firstName', formData.firstName);
+    data.append('lastName', formData.lastName);
+    data.append('skills', JSON.stringify(formData.skills.map((s) => s.value || s)));
+    data.append('position', formData.position?.value || '');
+    data.append('academicHistory', formData.academicHistory);
+    data.append('careerAspirations', formData.careerAspirations);
+    data.append('preferences', formData.preferences);
+    if (formData.resume) {
+      data.append('resume', formData.resume); 
+    }
   
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch('http://localhost:5000/api/profile', {
         method: 'POST',
-        body: formData,
+        body: data,
       });
   
-      const data = await response.json();
-      setFormData({
-        ...formData,
-        resume: data.file.filePath, 
-      });
+      if (response.ok) {
+        alert('Profile saved successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to save profile: ${errorData.error}`);
+      }
     } catch (error) {
-      console.error('Error uploading file:', error);
+      console.error('Error:', error);
+      alert('Error occurred while saving the profile.');
     }
   };
-    
+      
   
   return (
     <ThemeProvider theme={theme}>

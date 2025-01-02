@@ -5,7 +5,8 @@ const ProfileSchema = new mongoose.Schema({
   lastName: { type: String, required: true },
   skills: { type: [String], required: true },
   position: { type: String },
-  resume: { type: String },
+  resume: { type: Buffer },
+  resumeMimeType: { type: String },//retrieval purposess
   academicHistory: { type: String, required: false },
   careerAspirations: { type: String, required: false },
   preferences: { type: String, required: false },
