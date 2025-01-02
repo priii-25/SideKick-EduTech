@@ -41,7 +41,7 @@ const theme = createTheme({
   },
 });
 
-const Profile = () => {
+const Signup = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -52,7 +52,40 @@ const Profile = () => {
     careerAspirations: '',
     preferences: '',
   });
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    const formDataToSend = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      skills: formData.skills.map((skill) => skill.value || skill),
+      position: formData.position?.value || '',
+      resume: formData.resume || null,
+      academicHistory: formData.academicHistory,
+      careerAspirations: formData.careerAspirations,
+      preferences: formData.preferences,
+    };
+    
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formDataToSend),
+      });
+  
+      if (response.ok) {
+        alert('Profile saved successfully!');
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to save profile: ${errorData.error}`);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error occurred while saving the profile.');
+    }
+  };
+  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -74,18 +107,28 @@ const Profile = () => {
     });
   };
 
-  const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      resume: e.target.files[0],
-    });
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('resume', file);
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      const data = await response.json();
+      setFormData({
+        ...formData,
+        resume: data.file.filePath, 
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
   };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(formData);
-  };
-
+    
+  
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -100,7 +143,7 @@ const Profile = () => {
       >
         <Container maxWidth="md">
             <Typography variant="h4" align="center" gutterBottom>
-              Profile Page
+              Sign Up Page
             </Typography>
             <form onSubmit={handleSubmit}>
               <Grid container spacing={2}>
@@ -239,4 +282,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default Signup;
