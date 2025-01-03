@@ -1,0 +1,61 @@
+.skill-job-matching-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .skill-job-matching-container h2 {
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+  
+  .skill-job-matching-container p {
+    color: #555;
+    margin-bottom: 2rem;
+  }
+  
+  .swot-board {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .swot-item {
+    border: 2px solid #ccc;
+    padding: 1rem;
+    border-radius: 6px;
+    min-height: 150px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .swot-strengths {
+    background-color: #e2f7e2;
+    border-color: #70c870; 
+  }
+  
+  .swot-weaknesses {
+    background-color: #ffe2e2; 
+    border-color: #ff8c8c; 
+  }
+  
+  .swot-opportunities {
+    background-color: #e2f2ff; 
+    border-color: #8ccfff; 
+  }
+  
+  .swot-threats {
+    background-color: #fff0cc;
+    border-color: #ffd24d; 
+  }
+  
+  .swot-item h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .swot-item p {
+    margin: 0;
+    color: #333;
+  }
