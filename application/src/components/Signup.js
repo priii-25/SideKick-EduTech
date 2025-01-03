@@ -31,6 +31,7 @@ const positionsOptions = [
   { value: 'Business Analyst', label: 'Business Analyst' },
   { value: 'System Administrator', label: 'System Administrator' },
   { value: 'Security Engineer', label: 'Security Engineer' },
+  { value: 'ML Engineer', label: 'ML Engineer' },
 ];
 
 const theme = createTheme({
