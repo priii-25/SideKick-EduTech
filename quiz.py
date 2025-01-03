@@ -66,7 +66,6 @@ def load_or_create_faiss(documents, faiss_index_file):
 
 faiss_index_file = "offline_faiss_index.pkl"
 vectorstore = load_or_create_faiss(documents, faiss_index_file)
-
 prompt_template = PromptTemplate(
     input_variables=["context", "question"],
     template="""Use the following context to answer the question. If you cannot answer based on the context, say "I don't have enough information."
