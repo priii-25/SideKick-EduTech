@@ -37,7 +37,7 @@ const positionsOptions = [
 const theme = createTheme({
   typography: {
     h4: {
-      color: '#000',
+      color: '#fff',
     },
   },
 });
@@ -123,7 +123,7 @@ const Signup = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(to right, rgb(133, 178, 121), rgb(236, 249, 237))',
+          background: 'linear-gradient(to right, rgb(0, 0, 0), rgb(36, 9, 93))',
           padding: '2rem',
         }}
       >
@@ -165,12 +165,12 @@ const Signup = () => {
                     styles={{
                       control: (base) => ({
                         ...base,
-                        background: 'rgba(255, 255, 255, 0.1)',
+                        background: 'rgba(69, 255, 122, 0.1)',
                         borderColor: 'rgba(255, 255, 255, 0.5)',
                       }),
                       menu: (base) => ({
                         ...base,
-                        background: 'rgba(255, 255, 255, 0.9)',
+                        background: 'rgba(255, 255, 255)',
                       }),
                       singleValue: (base) => ({
                         ...base,
@@ -240,7 +240,7 @@ const Signup = () => {
                   <Button
                     variant="contained"
                     component="label"
-                    style={{ backgroundColor: '#000', color: '#ff7e5f' }}
+                    style={{ backgroundColor: '#000', color: '#fff' }}
                   >
                     Upload Resume
                     <input
@@ -255,7 +255,7 @@ const Signup = () => {
                     type="submit"
                     variant="contained"
                     fullWidth
-                    style={{ backgroundColor: '#000', color: '#ff7e5f' }}
+                    style={{ backgroundColor: '#000', color: '#fff' }}
                   >
                     Submit
                   </Button>
