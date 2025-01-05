@@ -23,44 +23,35 @@ class RoadMap:
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
         self.vectorstore = self.load_or_create_faiss()
+        self.skill_hierarchy = {
+            "foundational": {
+                "programming": ["Python", "R", "SQL"],
+                "mathematics": ["Statistics", "Linear Algebra", "Calculus"],
+                "tools": ["Git", "Command Line"]
+            },
+            "intermediate": {
+                "data_processing": ["Pandas", "NumPy", "Data Cleaning"],
+                "visualization": ["Matplotlib", "Seaborn", "Tableau"],
+                "ml_basics": ["Scikit-learn", "Model Evaluation", "Feature Engineering"]
+            },
+            "advanced": {
+                "deep_learning": ["Neural Networks", "TensorFlow", "PyTorch"],
+                "big_data": ["Spark", "Hadoop", "Cloud Computing"],
+                "deployment": ["MLOps", "Docker", "API Development"]
+            }
+        }
 
     def load_or_create_faiss(self):
         documents = [
-    "Learn Python libraries such as pandas, NumPy, Matplotlib, and scikit-learn for data manipulation, analysis, and visualization.",
-    "Master R for statistical computing and visualization using libraries like ggplot2 and dplyr.",
-    "Understand SQL for querying databases and data extraction.",
-    "Familiarize yourself with version control systems like Git and collaborative platforms like GitHub.",
-    "Deep dive into probability, distributions, and Bayes' theorem for modeling and inference.",
-    "Study linear algebra topics like vectors, matrices, and eigenvalues for machine learning foundations.",
-    "Focus on statistical methods, hypothesis testing, and regression analysis for data interpretation.",
-    "Learn calculus concepts such as differentiation and integration relevant to optimization in machine learning.",
-    "Understand supervised learning techniques, including linear regression, logistic regression, and decision trees.",
-    "Learn unsupervised learning techniques like clustering (K-means, DBSCAN) and dimensionality reduction (PCA, t-SNE).",
-    "Explore ensemble methods, including Random Forest, Gradient Boosting, and XGBoost.",
-    "Study model evaluation metrics like precision, recall, F1 score, and ROC-AUC.",
-    "Master neural networks, convolutional neural networks (CNNs), and recurrent neural networks (RNNs).",
-    "Learn frameworks like TensorFlow, PyTorch, and Keras for deep learning model development.",
-    "Understand advanced topics such as transformers, attention mechanisms, and transfer learning using models like BERT and GPT.",
-    "Explore big data tools such as Apache Hadoop, Spark, and Hive for distributed data processing.",
-    "Learn cloud computing platforms like AWS, Azure, and Google Cloud for scalable data science workflows.",
-    "Understand containerization with Docker and orchestration with Kubernetes for deploying data science solutions.",
-    "Learn ETL (Extract, Transform, Load) processes and tools like Apache Airflow and Talend.",
-    "Understand database management systems, including relational databases (PostgreSQL, MySQL) and NoSQL databases (MongoDB, Cassandra).",
-    "Familiarize with data lakes and warehouses such as Snowflake, Redshift, and Databricks.",
-    "Use Tableau or Power BI for interactive data visualization and dashboard creation.",
-    "Learn advanced plotting techniques with Python libraries like seaborn, plotly, and bokeh.",
-    "Practice storytelling with data to effectively communicate insights.",
-    "Understand domain-specific applications such as healthcare analytics, finance modeling, and e-commerce optimization.",
-    "Work on real-world projects like building recommendation systems, sentiment analysis, and predictive analytics models.",
-    "Participate in data science competitions on Kaggle or contribute to open-source projects.",
-    "Develop presentation skills to explain complex analyses to non-technical stakeholders.",
-    "Understand data ethics, including fairness, accountability, and compliance with regulations like GDPR.",
-    "Learn project management methodologies like CRISP-DM and agile for structuring data science projects.",
-    "Dive into reinforcement learning for decision-making in dynamic environments.",
-    "Study graph analytics and graph neural networks for social network analysis.",
-    "Learn MLOps practices for deploying, monitoring, and maintaining machine learning models in production.",
-    "Explore AutoML tools like H2O.ai, Google AutoML, and DataRobot for automating model building."
-]
+            "Learn Python libraries such as pandas, NumPy, Matplotlib, and scikit-learn for data manipulation, analysis, and visualization.",
+            "Explore AutoML tools like H2O.ai, Google AutoML, and DataRobot for automating model building.",
+            "Start with foundational programming skills in Python, focusing on data structures and algorithms.",
+            "Build upon basic programming with intermediate data processing using pandas and NumPy.",
+            "Progress to advanced topics like deep learning only after mastering core machine learning concepts.",
+            "Develop mathematical foundations before moving to complex statistical modeling.",
+            "Master data visualization tools progressively, starting from basic plots to interactive dashboards.",
+            "Learn deployment technologies after gaining solid modeling experience."
+        ]
 
         if os.path.exists(self.faiss_index):
             print("Loading Faiss Index")
@@ -74,39 +65,73 @@ class RoadMap:
                 pickle.dump(vectorstore, f)
             return vectorstore
 
+    def determine_skill_level(self, capabilities: str) -> str:
+        """Determine the starting skill level based on user capabilities."""
+        capabilities_lower = capabilities.lower()
+        if "expert" in capabilities_lower or "advanced" in capabilities_lower:
+            return "advanced"
+        elif "intermediate" in capabilities_lower or "experienced" in capabilities_lower:
+            return "intermediate"
+        return "foundational"
+
+    def get_relevant_skills(self, skill_level: str) -> list:
+        """Get relevant skills based on determined skill level."""
+        skills = []
+        levels = list(self.skill_hierarchy.keys())
+        start_index = levels.index(skill_level)
+        
+        for level in levels[start_index:min(start_index + 2, len(levels))]:
+            for category, category_skills in self.skill_hierarchy[level].items():
+                skills.extend(category_skills)
+        return skills
+
     def generate_roadmap(self, goal: str, capabilities: str, experience: str):
         try:
+            skill_level = self.determine_skill_level(capabilities)
+            relevant_skills = self.get_relevant_skills(skill_level)
+            
             prompt_template = PromptTemplate(
-                template="""Based on the following retrieved context, generate a detailed and personalized roadmap.
+                template="""Based on the following retrieved context and skill hierarchy, generate a detailed and personalized roadmap.
 
-Use MAJORLY the information provided in the context below to construct the roadmap.
-If the context does not fully address the user's goal, provide guidance accordingly related and around the context ONLY. If nothing is present relavnt to the context and goal, provide a general roadmap and acknowledge the limitation.
 Context: {context}
 
 User Goal: {goal}
 Current Capabilities: {capabilities}
 Experience Level: {experience}
+Relevant Skills to Focus On: {relevant_skills}
 
-Please provide a detailed roadmap with specific milestones, resources, and timelines.
+Please provide a structured learning path that:
+1. Follows a clear progression from foundational to advanced concepts
+2. Groups related skills and technologies together
+3. Provides specific milestones and prerequisites for each stage
+4. Includes estimated timelines for each phase
+5. Suggests specific resources or projects for practical application
+
+Format the roadmap in clear phases, with each phase building upon the previous one.
+Ensure concepts are introduced in a logical order based on dependencies.
 
 Roadmap:""",
-                input_variables=["context", "goal", "capabilities", "experience"]
+                input_variables=["context", "goal", "capabilities", "experience", "relevant_skills"]
             )
+            
             query = f"{goal} {capabilities} {experience}"
             docs = self.vectorstore.similarity_search(query, k=6)
             context = "\n".join([doc.page_content for doc in docs])
+            
             chain = prompt_template | self.llm
             result = chain.invoke({
                 "context": context,
                 "goal": goal,
                 "capabilities": capabilities,
-                "experience": experience
+                "experience": experience,
+                "relevant_skills": ", ".join(relevant_skills)
             })
 
             return result.content
 
         except Exception as e:
             return f"Error in making roadmap😢. Please try again later. Error: {e}"
+
 if __name__ == "__main__":
     roadmap = RoadMap(os.getenv("GOOGLE_API_KEY"))
     user_goal = "Become a data scientist"
