@@ -8,7 +8,7 @@ const HomePage = () => {
         <ul>
           <li><a href="/">HOME</a></li>
           <li><a href="/skill-job-matching">SKILL-JOB MATCHING</a></li>
-          <li><a href="/my-profile">MY PROFILE</a></li>
+          <li><a href="/profile">MY PROFILE</a></li>
           <li><a href="/learning">LEARNING</a></li>
         </ul>
       </nav>
