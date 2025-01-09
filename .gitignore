@@ -3,3 +3,6 @@
 *.txt
 .env
 *.json
+*.pdf
+*.csv
+env
