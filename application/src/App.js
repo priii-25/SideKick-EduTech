@@ -6,6 +6,7 @@ import Profile from './components/Profile';
 import LearningPage from './components/LearningPage';
 import Signup from './components/Signup';
 import Chatbot from './components/chatbot';
+import GraphVisualization from './components/GraphVisualization';
 import './App.css';
 
 function App() {
@@ -18,7 +19,9 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/learning" element={<LearningPage />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/GraphVisualization" element={<GraphVisualization />} />
           <Route path="/chatbot" element={<Chatbot/>} />
+  
         </Routes>
       </div>
     </Router>
