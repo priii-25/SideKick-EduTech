@@ -32,12 +32,27 @@ const Chatbot = () => {
 
   const generateAIResponse = async (userInput) => {
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const aiResponse = `I received your message: "${userInput}". This is a simulated response.`;
-    
-    setMessages(prev => [...prev, { text: aiResponse, isUser: false }]);
-    setIsTyping(false);
+    try {
+      const response = await fetch('http://localhost:5000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userInput }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setMessages(prev => [...prev, { text: data.response, isUser: false }]);
+    } catch (error) {
+      console.error('Error:', error);
+      setMessages(prev => [...prev, { text: "Sorry, I encountered an error. Please try again.", isUser: false }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSubmit = async (e) => {

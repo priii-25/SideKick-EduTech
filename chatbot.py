@@ -1,8 +1,13 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import itertools
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
 from langchain_community.llms import Ollama
+
+app = Flask(__name__)
+CORS(app) 
 
 def decompose_query(query: str):
     steps = []
@@ -62,21 +67,36 @@ def dummy_llm_generation(query: str, context: str):
     response = llama2(query)
     return response
 
-if __name__ == "__main__":
-    documents = [
-        "Data Scientist position, requires Python, machine learning, and data visualization skills.",
-        "Software Engineer position, proficiency in C++ and system design.",
-        "Front-end Developer position, requires JavaScript, React, and CSS expertise.",
-        "Full-stack Developer position, needs experience with Node.js and cloud deployment."
-    ]
+documents = [
+    "Data Scientist position, requires Python, machine learning, and data visualization skills.",
+    "Software Engineer position, proficiency in C++ and system design.",
+    "Front-end Developer position, requires JavaScript, React, and CSS expertise.",
+    "Full-stack Developer position, needs experience with Node.js and cloud deployment."
+]
 
-    sem_search = SemanticSearch()
-    sem_search.build_index(documents)
+sem_search = SemanticSearch()
+sem_search.build_index(documents)
 
-    user_query = "Show me roles that require Python and also need cloud deployment"
+@app.route('/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.json
+        user_message = data.get('message')
+        
+        if not user_message:
+            return jsonify({'error': 'No message provided'}), 400
 
-    answer = rag_pipeline(query=user_query, semantic_search_instance=sem_search,
-                          generation_fn=dummy_llm_generation, top_k=2)
+        response = rag_pipeline(
+            query=user_message,
+            semantic_search_instance=sem_search,
+            generation_fn=dummy_llm_generation,
+            top_k=2
+        )
 
-    print("=== FINAL ANSWER ===")
-    print(answer)
+        return jsonify({'response': response})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
