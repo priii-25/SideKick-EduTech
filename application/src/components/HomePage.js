@@ -34,7 +34,10 @@ const HomePage = () => {
 
       <header className="hero">
         <h1 className="hero-title fade-in">
-          Welcome to SkillUp
+          Welcome to SideKick
+        </h1>
+        <h1>
+        Your Trusted Companion in Learning and Growth!
         </h1>
         <p className="hero-subtitle fade-in">
           Your personalized journey to becoming a Data Scientist starts here
