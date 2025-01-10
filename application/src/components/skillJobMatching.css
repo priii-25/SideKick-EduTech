@@ -2,13 +2,13 @@
   min-height: 100vh;
   overflow: hidden;
   position: relative;
-  background: linear-gradient(135deg, #ffe2e6 0%, #e8e8e8 100%);
+  background: linear-gradient(135deg, #ce7d88 0%, #e8e8e8 100%);
 }
 
 .hexagon {
   position: absolute;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(59, 45, 45, 0.468);
   animation: float linear infinite;
   z-index: 0;
 }
