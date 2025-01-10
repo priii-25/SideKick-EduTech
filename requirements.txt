@@ -1,0 +1,13 @@
+langchain
+langchain_google_genai
+langchain_huggingface
+langchain_community
+python-dotenv
+faiss-cpu
+joblib
+scikit-learn
+pandas
+neo4j-driver
+flask
+flask_cors
+pypdf

@@ -1,6 +1,5 @@
 *.pkl
 *.db
-*.txt
 .env
 *.json
 *.pdf
