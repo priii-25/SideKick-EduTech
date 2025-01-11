@@ -20,9 +20,9 @@ function App() {
           <Route path="/learning" element={<LearningPage />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/GraphVisualization" element={<GraphVisualization />} />
-          <Route path="/chatbot" element={<Chatbot/>} />
   
         </Routes>
+        <Chatbot />
       </div>
     </Router>
   );

@@ -1,109 +1,82 @@
-import React, { useState, useRef, useEffect } from 'react';
-import './chatbot.css';
+import React, { useState } from 'react';
+import './chatbot.css';  // We'll create this next
 
-const ChatMessage = ({ message, isUser }) => (
-  <div className={`message ${isUser ? 'user-message' : 'ai-message'}`}>
-    <div className="message-content">
-      <div className="avatar">
-        {isUser ? '👤' : '🤖'}
-      </div>
-      <div className="text">
-        {message}
-      </div>
-    </div>
-  </div>
-);
+function Chatbot() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-const Chatbot = () => {
-  const [messages, setMessages] = useState([
-    { text: "Hello! I'm your AI assistant. How can I help you today?", isUser: false }
-  ]);
-  const [inputText, setInputText] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+    setIsLoading(true);
+    // Add user message to chat history
+    setChatHistory(prev => [...prev, { type: 'user', content: message }]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const generateAIResponse = async (userInput) => {
-    setIsTyping(true);
     try {
       const response = await fetch('http://localhost:5000/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: userInput }),
+        body: JSON.stringify({ message: message }),
       });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-
       const data = await response.json();
-      setMessages(prev => [...prev, { text: data.response, isUser: false }]);
+      // Add bot response to chat history
+      setChatHistory(prev => [...prev, { type: 'bot', content: data.response }]);
     } catch (error) {
       console.error('Error:', error);
-      setMessages(prev => [...prev, { text: "Sorry, I encountered an error. Please try again.", isUser: false }]);
-    } finally {
-      setIsTyping(false);
+      setChatHistory(prev => [...prev, { type: 'bot', content: 'Sorry, I encountered an error.' }]);
     }
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
-
-    setMessages(prev => [...prev, { text: inputText, isUser: true }]);
-    const userInput = inputText;
-    setInputText('');
-
-    await generateAIResponse(userInput);
+    setIsLoading(false);
+    setMessage('');
   };
 
   return (
-    <div className="app-container">
-      <div className="chat-container">
-        <header className="chat-header">
-          <h1>AI Chat Assistant</h1>
-        </header>
+    <div className="chatbot-container">
+      {/* Floating chat icon */}
+      <button 
+        className={`chat-icon ${isOpen ? 'hidden' : ''}`} 
+        onClick={() => setIsOpen(true)}
+      >
+        <span role="img" aria-label="chat">💬</span>
+      </button>
 
-        <div className="messages-container">
-          {messages.map((message, index) => (
-            <ChatMessage
-              key={index}
-              message={message.text}
-              isUser={message.isUser}
+      {/* Chat window */}
+      {isOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <h3>Chat Assistant</h3>
+            <button className="close-btn" onClick={() => setIsOpen(false)}>×</button>
+          </div>
+          
+          <div className="chat-messages">
+            {chatHistory.map((msg, index) => (
+              <div key={index} className={`message ${msg.type}`}>
+                {msg.content}
+              </div>
+            ))}
+            {isLoading && <div className="message bot">Typing...</div>}
+          </div>
+
+          <form onSubmit={handleSubmit} className="chat-input-form">
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message..."
+              className="chat-input"
             />
-          ))}
-          {isTyping && (
-            <div className="typing-indicator">
-              AI is typing<span>.</span><span>.</span><span>.</span>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
+            <button type="submit" className="send-button">Send</button>
+          </form>
         </div>
-
-        <form className="input-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type your message here..."
-            disabled={isTyping}
-          />
-          <button type="submit" disabled={!inputText.trim() || isTyping}>
-            Send
-          </button>
-        </form>
-      </div>
+      )}
     </div>
   );
-};
+}
 
 export default Chatbot;
