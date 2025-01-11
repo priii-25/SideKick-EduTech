@@ -18,7 +18,13 @@ load_dotenv()
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000"],
+        "methods": ["OPTIONS", "POST"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 llm = ChatGoogleGenerativeAI(
@@ -30,19 +36,23 @@ embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-Mi
 
 def load_cv(file_path: str) -> str:
     """Load CV from PDF or text file."""
-    if file_path.endswith('.pdf'):
-        loader = PyPDFLoader(file_path)
-    else:
-        loader = TextLoader(file_path)
-    
-    documents = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
-    texts = text_splitter.split_documents(documents)
-    
-    return ' '.join([doc.page_content for doc in texts])
+    try:
+        if file_path.endswith('.pdf'):
+            loader = PyPDFLoader(file_path)
+        else:
+            loader = TextLoader(file_path)
+        
+        documents = loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+        texts = text_splitter.split_documents(documents)
+        
+        return ' '.join([doc.page_content for doc in texts])
+    except Exception as e:
+        print(f"Error loading CV: {str(e)}")
+        return ""
 
 def extract_profile_info(cv_text: str) -> str:
     """Extract key information from the user's CV."""
@@ -60,9 +70,14 @@ Career Aspirations:""",
         input_variables=["cv_text"]
     )
     
-    chain = profile_prompt | llm
-    result = chain.invoke({"cv_text": cv_text})
-    return result.content
+    try:
+        chain = profile_prompt | llm
+        result = chain.invoke({"cv_text": cv_text})
+        print("Profile extraction result:", result.content)
+        return result.content
+    except Exception as e:
+        print(f"Error extracting profile: {str(e)}")
+        return ""
 
 def perform_swot_analysis(user_profile, industry_skills):
     """Perform SWOT analysis based on user profile and industry demands."""
@@ -73,56 +88,65 @@ User Profile: {user_profile}
 
 Industry Skill Demands: {industry_skills}
 
-Please provide a detailed SWOT analysis with the following format:
+Format your response exactly like this, using simple dashes for bullets:
 
 Strengths:
-- (List strengths)
+- (strength point 1)
+- (strength point 2)
 
 Weaknesses:
-- (List weaknesses)
+- (weakness point 1)
+- (weakness point 2)
 
 Opportunities:
-- (List opportunities)
+- (opportunity point 1)
+- (opportunity point 2)
 
 Threats:
-- (List threats)
-
-SWOT Analysis:""",
+- (threat point 1)
+- (threat point 2)""",
         input_variables=["user_profile", "industry_skills"]
     )
 
-    chain = swot_prompt | llm
-    result = chain.invoke({
-        "user_profile": user_profile,
-        "industry_skills": industry_skills
-    })
-    return result.content
+    try:
+        chain = swot_prompt | llm
+        result = chain.invoke({
+            "user_profile": user_profile,
+            "industry_skills": industry_skills
+        })
+        print("Raw SWOT Result:", result.content)
+        return result.content
+    except Exception as e:
+        print(f"Error performing SWOT analysis: {str(e)}")
+        return ""
 
 @app.route('/swot-analysis', methods=['POST'])
 def api_swot_analysis():
-    """
-    Example POST request payload:
-    {
-      "cv_path": "test.pdf",
-      "industry_skills": "- Machine Learning\n- Data Visualization"
-    }
-    """
-    data = request.get_json()
-    cv_path = data.get("cv_path")
-    industry_skills = data.get("industry_skills")
+    try:
+        data = request.get_json()
+        cv_path = data.get("cv_path")
+        industry_skills = data.get("industry_skills", "")
 
-    if not cv_path:
-        return jsonify({"error": "cv_path is required"}), 400
+        if not cv_path:
+            return jsonify({"error": "cv_path is required"}), 400
 
-    if not industry_skills:
-        industry_skills = ""
+        cv_text = load_cv(cv_path)
+        if not cv_text:
+            return jsonify({"error": "Failed to load CV"}), 400
 
-    cv_text = load_cv(cv_path)
-    user_profile = extract_profile_info(cv_text)
+        user_profile = extract_profile_info(cv_text)
+        if not user_profile:
+            return jsonify({"error": "Failed to extract profile"}), 400
 
-    swot_result = perform_swot_analysis(user_profile, industry_skills)
+        swot_result = perform_swot_analysis(user_profile, industry_skills)
+        if not swot_result:
+            return jsonify({"error": "Failed to perform SWOT analysis"}), 400
 
-    return jsonify({"swot": swot_result})
+        return jsonify({"swot": swot_result})
+    
+    except Exception as e:
+        print(f"API error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
