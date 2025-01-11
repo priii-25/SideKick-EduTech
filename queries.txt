@@ -1,0 +1,76 @@
+1. Query to retrieve all domains and their associated skills
+cypher
+Copy code
+MATCH (d:Domain)-[:CONTAINS_SKILL]->(s:Skill)
+RETURN d.name AS Domain, collect(s.name) AS Skills
+
+2. Query to retrieve all professions and their required domains
+cypher
+Copy code
+MATCH (p:Profession)-[:REQUIRES_DOMAIN]->(d:Domain)
+RETURN p.name AS Profession, collect(d.name) AS Domains
+
+3. Query to retrieve all professions and their required skills
+cypher
+Copy code
+MATCH (p:Profession)-[:REQUIRES_SKILL]->(s:Skill)
+RETURN p.name AS Profession, collect(s.name) AS Skills
+
+4. Query to retrieve all related professions for a given profession
+cypher
+Copy code
+MATCH (p:Profession {name: $profession})-[:RELATED_TO]->(r:Profession)
+RETURN r.name AS RelatedProfession
+
+5. Query to retrieve all skills for a given user
+cypher
+Copy code
+MATCH (u:User {name: $user_name})-[:HAS_SKILL]->(s:Skill)
+RETURN s.name AS Skill
+
+6. Query to find users who have a specific skill
+cypher
+Copy code
+MATCH (u:User)-[:HAS_SKILL]->(s:Skill {name: $skill_name})
+RETURN u.name AS User
+Replace $skill_name with the skill you're querying for.
+
+7. Query to find professions that require a specific skill
+cypher
+Copy code
+MATCH (p:Profession)-[:REQUIRES_SKILL]->(s:Skill {name: $skill_name})
+RETURN p.name AS Profession
+Replace $skill_name with the skill you're interested in.
+
+8. Query to retrieve all professions and related professions with required skills
+cypher
+Copy code
+MATCH (p:Profession)-[:REQUIRES_SKILL]->(s:Skill)
+OPTIONAL MATCH (p)-[:RELATED_TO]->(r:Profession)
+RETURN p.name AS Profession, collect(s.name) AS Skills, collect(r.name) AS RelatedProfessions
+
+9. Query to find the closest profession for a user based on cosine similarity (calculating similarity would typically require external processing, but this is a conceptual query to get the data for similarity calculation):
+cypher
+Copy code
+MATCH (u:User {name: $user_name})-[:HAS_SKILL]->(s:Skill)
+WITH u, collect(s.name) AS user_skills
+MATCH (p:Profession)-[:REQUIRES_SKILL]->(s:Skill)
+WITH p, collect(s.name) AS profession_skills, user_skills
+WHERE size(user_skills) > 0 AND size(profession_skills) > 0
+RETURN p.name AS Profession, gds.similarity.cosine(user_skills, profession_skills) AS CosineSimilarity
+ORDER BY CosineSimilarity DESC
+LIMIT 1
+Note: This query assumes you're using a graph data science library like Neo4j Graph Data Science (GDS) for calculating the cosine similarity. The actual cosine similarity computation would likely be done outside of Neo4j for more flexibility and efficiency in this specific context.
+
+10. Query to find all professions within a specific domain
+cypher
+Copy code
+MATCH (d:Domain {name: $domain})<-[:REQUIRES_DOMAIN]-(p:Profession)
+RETURN p.name AS Profession
+Replace $domain with the domain you're querying for.
+
+11. Query to list all skills in a specific domain
+cypher
+Copy code
+MATCH (d:Domain {name: $domain})-[:CONTAINS_SKILL]->(s:Skill)
+RETURN s.name AS Skill

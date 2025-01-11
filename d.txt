@@ -1,0 +1,7 @@
+Artificial intelligence (AI) is the simulation of human intelligence in machines that are programmed to think and learn. It encompasses various fields, including machine learning, natural language processing, computer vision, and robotics.
+
+Machine learning (ML) is a subset of AI that focuses on training algorithms to learn patterns and make decisions based on data. Natural language processing (NLP) enables machines to understand and respond to human language.
+
+Applications of AI include autonomous vehicles, virtual assistants, predictive analytics, and medical diagnostics. AI has transformed industries by improving efficiency and enabling new capabilities.
+
+Challenges in AI include ethical considerations, data privacy, and the need for vast amounts of computational resources.
