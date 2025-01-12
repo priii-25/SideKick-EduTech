@@ -1,11 +1,17 @@
+from flask import Flask, request, jsonify
 from neo4j import GraphDatabase
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from typing import List, Dict, Tuple, Set
 import logging
+from flask_cors import CORS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+app = Flask(__name__)
+CORS(app)
 
 class CareerPathAnalyzer:
     def __init__(self, uri: str, user: str, password: str):
@@ -21,13 +27,9 @@ class CareerPathAnalyzer:
         if not user_skills:
             return {"error": "No skills found for user"}
 
-        # Get user's domain expertise
         user_domains = self._get_domains_for_skills(user_skills)
-        
-        # Get all professions and their requirements
         professions_data = self._get_all_professions_data()
-        
-        # Calculate profession matches
+
         profession_matches = []
         for prof_name, prof_data in professions_data.items():
             match_score = self._calculate_profession_match(
@@ -37,22 +39,18 @@ class CareerPathAnalyzer:
                 prof_data['domains']
             )
             profession_matches.append((prof_name, match_score, prof_data))
-        
-        # Sort by match score
+
         profession_matches.sort(key=lambda x: x[1], reverse=True)
-        
-        # Prepare detailed analysis
+
         analysis = {
             "user_skills": list(user_skills),
             "user_domains": list(user_domains),
             "career_paths": []
         }
-        
-        # Analyze top matching professions
+
         for prof_name, match_score, prof_data in profession_matches[:top_professions]:
             missing_skills = set(prof_data['required_skills']) - set(user_skills)
             matching_skills = set(prof_data['required_skills']) & set(user_skills)
-            
             path_analysis = {
                 "profession": prof_name,
                 "match_score": round(match_score * 100, 2),
@@ -62,21 +60,24 @@ class CareerPathAnalyzer:
                 "related_professions": prof_data['related_professions']
             }
             analysis["career_paths"].append(path_analysis)
-        
+
         return analysis
 
     def _get_user_skills(self, user_name: str) -> Set[str]:
-        """Get user's current skills."""
         with self.driver.session(database="jobsskills") as session:
             query = """
                 MATCH (u:User {name: $user_name})-[:HAS_SKILL]->(s:Skill)
                 RETURN collect(s.name) AS skills
             """
             result = session.run(query, user_name=user_name)
-            return set(result.single()["skills"])
+            record = result.single()
+            if record and record["skills"]:
+                return set(record["skills"])
+            return set()
 
     def _get_domains_for_skills(self, skills: Set[str]) -> Set[str]:
-        """Get domains associated with given skills."""
+        if not skills:
+            return set()
         with self.driver.session(database="jobsskills") as session:
             query = """
                 MATCH (s:Skill)<-[:CONTAINS_SKILL]-(d:Domain)
@@ -84,10 +85,12 @@ class CareerPathAnalyzer:
                 RETURN collect(DISTINCT d.name) AS domains
             """
             result = session.run(query, skills=list(skills))
-            return set(result.single()["domains"])
+            record = result.single()
+            if record and record["domains"]:
+                return set(record["domains"])
+            return set()
 
     def _get_all_professions_data(self) -> Dict:
-        """Get comprehensive data for all professions."""
         with self.driver.session(database="jobsskills") as session:
             query = """
                 MATCH (p:Profession)
@@ -101,32 +104,35 @@ class CareerPathAnalyzer:
                     collect(DISTINCT rp.name) AS related_professions
             """
             result = session.run(query)
-            return {
-                record["profession"]: {
+            professions_data = {}
+            for record in result:
+                professions_data[record["profession"]] = {
                     "required_skills": record["required_skills"],
                     "domains": record["domains"],
-                    "related_professions": record["related_professions"]
+                    "related_professions": record["related_professions"],
                 }
-                for record in result
-            }
+            return professions_data
 
     def _calculate_profession_match(self, 
-                                  user_skills: Set[str], 
-                                  user_domains: Set[str],
-                                  required_skills: List[str], 
-                                  profession_domains: List[str]) -> float:
-        """Calculate how well user matches a profession."""
-        # Calculate skill match
-        skill_match = len(set(required_skills) & user_skills) / len(required_skills)
-        
-        # Calculate domain match
-        domain_match = len(set(profession_domains) & user_domains) / len(profession_domains) if profession_domains else 0
-        
-        # Weighted average (skills count more than domains)
+                                    user_skills: Set[str], 
+                                    user_domains: Set[str],
+                                    required_skills: List[str], 
+                                    profession_domains: List[str]) -> float:
+        if not required_skills: 
+            skill_match = 0
+        else:
+            skill_match = len(set(required_skills) & user_skills) / len(required_skills)
+
+        if profession_domains:
+            domain_match = len(set(profession_domains) & user_domains) / len(profession_domains)
+        else:
+            domain_match = 0
+
         return 0.7 * skill_match + 0.3 * domain_match
 
     def _categorize_skills_by_domain(self, skills: Set[str]) -> Dict[str, List[str]]:
-        """Categorize skills by their domains."""
+        if not skills:
+            return {}
         with self.driver.session(database="jobsskills") as session:
             query = """
                 MATCH (s:Skill)<-[:CONTAINS_SKILL]-(d:Domain)
@@ -138,7 +144,6 @@ class CareerPathAnalyzer:
             for record in result:
                 categorized[record["domain"]] = record["domain_skills"]
             
-            # Add uncategorized skills
             all_categorized = set().union(*categorized.values()) if categorized else set()
             uncategorized = skills - all_categorized
             if uncategorized:
@@ -146,32 +151,36 @@ class CareerPathAnalyzer:
             
             return categorized
 
-if __name__ == "__main__":
-    uri = "bolt://localhost:7687"
-    user = "neo4j"
-    password = "priyanshi"
-    
-    analyzer = CareerPathAnalyzer(uri, user, password)
-    
+# Create a single global analyzer (you could set up multiple if needed)
+analyzer = CareerPathAnalyzer(uri="bolt://localhost:7687", user="neo4j", password="priyanshi")
+
+@app.route('/api/initialize', methods=['GET'])
+def initialize():
+    """
+    Example endpoint that could be used by the React app to confirm
+    the Flask server is running or perform any setup tasks.
+    """
+    return jsonify({"message": "System initialized"}), 200
+
+@app.route('/api/analyze-skills', methods=['POST'])
+def analyze_skills():
+    """
+    Endpoint that receives a list of skills and returns analysis
+    or skill gaps based on the existing logic.
+    """
+    data = request.get_json()
+    if not data or 'skills' not in data:
+        return jsonify({"error": "No skills provided"}), 400
+
     try:
-        # Analyze career paths for test1
-        analysis = analyzer.analyze_career_paths("test1")
-        
-        print("\n=== Career Path Analysis ===")
-        print(f"\nCurrent Skills: {', '.join(analysis['user_skills'])}")
-        print(f"Domains: {', '.join(analysis['user_domains'])}")
-        
-        print("\nTop Career Paths:")
-        for path in analysis['career_paths']:
-            print(f"\n{path['profession']}:")
-            print(f"Match Score: {path['match_score']}%")
-            print(f"Matching Skills: {', '.join(path['matching_skills'])}")
-            print("\nMissing Skills by Domain:")
-            for domain, skills in path['missing_skills_by_domain'].items():
-                print(f"  {domain}: {', '.join(skills)}")
-            if path['related_professions']:
-                print(f"Related Professions: {', '.join(path['related_professions'])}")
-            print("-" * 50)
-    
+        result = analyzer.analyze_career_paths("test1")
+        return jsonify(result), 200
+    except Exception as e:
+        logger.error(f"Error analyzing skills: {e}")
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    try:
+        app.run(debug=True, port=5000)
     finally:
         analyzer.close()

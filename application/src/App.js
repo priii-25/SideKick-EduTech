@@ -6,6 +6,7 @@ import Profile from './components/Profile';
 import LearningPage from './components/LearningPage';
 import Signup from './components/Signup';
 import Chatbot from './components/chatbot';
+import SkillGapAnalyzer from './components/SkillGapAnalyzer';
 import GraphVisualization from './components/GraphVisualization';
 import './App.css';
 
@@ -20,7 +21,7 @@ function App() {
           <Route path="/learning" element={<LearningPage />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/GraphVisualization" element={<GraphVisualization />} />
-  
+          <Route path="/Skill" element={<SkillGapAnalyzer />} />
         </Routes>
         <Chatbot />
       </div>
