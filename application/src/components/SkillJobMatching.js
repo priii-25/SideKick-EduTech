@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './skillJobMatching.css';
+import GraphVisualization from './GraphVisualization';
+import SkillGapAnalyzer from './SkillGapAnalyzer';
 
 const SkillJobMatching = () => {
   const [hexagons, setHexagons] = useState([]);
@@ -194,6 +196,8 @@ const SkillJobMatching = () => {
           </div>
         </div>
       </div>
+    <GraphVisualization/>
+    <SkillGapAnalyzer/>
     </div>
   );
 };
