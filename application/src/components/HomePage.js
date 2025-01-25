@@ -1,8 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './homePage.css';
+import ReactMarkdown from 'react-markdown'; 
 
 const HomePage = () => {
   const [activePhase, setActivePhase] = useState(1);
+  const [roadmapData, setRoadmapData] = useState(null);
+  const [phases, setPhases] = useState([]);
+
+  const parseRoadmapContent = (markdownContent) => {
+    const phaseRegex = /\*\*Phase \d+:[^*]+\*\*/g;
+    const phases = markdownContent.match(phaseRegex).map((phase) => {
+      const phaseNumber = phase.match(/Phase (\d+)/)[1];
+      const phaseTitle = phase.match(/Phase \d+: ([^*]+)/)[1].trim();
+      
+      const milestoneStartIndex = markdownContent.indexOf(phase);
+      const nextPhaseIndex = markdownContent.indexOf(`**Phase ${parseInt(phaseNumber) + 1}`, milestoneStartIndex);
+      const phaseContent = markdownContent.slice(
+        milestoneStartIndex,
+        nextPhaseIndex === -1 ? undefined : nextPhaseIndex
+      );
+      
+      const milestones = phaseContent
+        .match(/\* ([^*\n]+)/g)
+        ?.map(m => m.replace('* ', '').trim())
+        .filter(Boolean) || [];
+
+      return {
+        number: parseInt(phaseNumber),
+        title: phaseTitle,
+        milestones,
+        duration: phase.match(/\((\d+-\d+ weeks)\)/)?.[1] || '',
+        skills: phaseContent.match(/\*\*Skills:\*\* ([^*\n]+)/)?.[1] || '',
+      };
+    });
+
+    return phases;
+  };
+
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/roadmap/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        goal: "Data Scientist",
+        capabilities: "Intermediate understanding of Python, basic machine learning concepts",
+        experience: "Beginner"
+      })
+    })
+      .then(response => response.text())
+      .then(data => {
+        setRoadmapData(data);
+        const parsedPhases = parseRoadmapContent(data);
+        setPhases(parsedPhases);
+      })
+      .catch(error => console.error('Error fetching roadmap:', error));
+  }, []);
 
   const scrollToContent = () => {
     const contentSection = document.querySelector('.section-header');
@@ -37,7 +91,7 @@ const HomePage = () => {
           Welcome to SideKick
         </h1>
         <h1>
-        Your Trusted Companion in Learning and Growth!
+          Your Trusted Companion in Learning and Growth!
         </h1>
         <p className="hero-subtitle fade-in">
           Your personalized journey to becoming a Data Scientist starts here
@@ -58,41 +112,37 @@ const HomePage = () => {
         </div>
 
         <div className="phases-grid">
-          {[1, 2, 3].map((phase) => (
+          {phases.map((phase) => (
             <div
-              key={phase}
-              className={`phase-card ${activePhase === phase ? 'active' : ''}`}
-              onClick={() => setActivePhase(phase)}
+              key={phase.number}
+              className={`phase-card ${activePhase === phase.number ? 'active' : ''}`}
+              onClick={() => setActivePhase(phase.number)}
             >
               <div className="phase-content">
                 <div className="phase-header">
                   <div className="phase-icon">
                     <span className="icon">
-                      {phase === 1 ? '📚' : phase === 2 ? '🏆' : '👥'}
+                      {phase.number === 1 ? '📚' : phase.number === 2 ? '🏆' : '🔬'}
                     </span>
                   </div>
                   <h3 className="phase-title">
-                    Phase {phase}: {phase === 1 ? 'Foundations' : phase === 2 ? 'Core ML' : 'Projects'}
+                    Phase {phase.number}: {phase.title}
                   </h3>
+                  <div className="phase-duration">{phase.duration}</div>
                 </div>
                 
                 <div className="milestones">
-                  {phase === activePhase && (
+                  {phase.number === activePhase && (
                     <div className="milestone-container fade-in">
-                      {[1, 2].map((milestone) => (
-                        <div key={milestone} className="milestone">
+                      <div className="skills">
+                        <strong>Skills:</strong> {phase.skills}
+                      </div>
+                      {phase.milestones.map((milestone, index) => (
+                        <div key={index} className="milestone">
                           <div className="milestone-dot"></div>
                           <div className="milestone-content">
-                            <h4 className="milestone-title">
-                              Milestone {milestone}
-                            </h4>
                             <p className="milestone-description">
-                              {phase === 1 && milestone === 1 && "Master Python fundamentals including syntax, data structures, and OOP"}
-                              {phase === 1 && milestone === 2 && "Deep dive into statistics and probability fundamentals"}
-                              {phase === 2 && milestone === 1 && "Learn core machine learning algorithms and mathematics"}
-                              {phase === 2 && milestone === 2 && "Build and train neural networks with TensorFlow"}
-                              {phase === 3 && milestone === 1 && "Create real-world projects and build portfolio"}
-                              {phase === 3 && milestone === 2 && "Network with the community and improve soft skills"}
+                              {milestone}
                             </p>
                           </div>
                         </div>
