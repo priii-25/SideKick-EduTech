@@ -1,19 +1,35 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI   
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
 import pickle
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 llm = ChatGoogleGenerativeAI(
     model="gemini-1.5-pro",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.2,
 )
+
+class RoadmapRequest(BaseModel):
+    goal: str
+    capabilities: str
+    experience: str
 
 class RoadMap:
     def __init__(self, google_api_key: str, faiss_index: str = "roadmap_faiss_index.pkl"):
@@ -132,15 +148,11 @@ Roadmap:""",
         except Exception as e:
             return f"Error in making roadmap😢. Please try again later. Error: {e}"
 
-if __name__ == "__main__":
-    roadmap = RoadMap(os.getenv("GOOGLE_API_KEY"))
-    user_goal = "Become a data scientist"
-    user_capabilities = "I know Python basics and have some experience with statistics."
-    user_experience = "Beginner"
-    print("Generating roadmap...\n")
-    roadmap_output = roadmap.generate_roadmap(
-        goal=user_goal,
-        capabilities=user_capabilities,
-        experience=user_experience
+roadmap = RoadMap(os.getenv("GOOGLE_API_KEY"))
+@app.post("/roadmap/")
+async def generate_roadmap(request: RoadmapRequest):
+    return roadmap.generate_roadmap(
+        goal=request.goal,
+        capabilities=request.capabilities,
+        experience=request.experience,
     )
-    print(roadmap_output)
