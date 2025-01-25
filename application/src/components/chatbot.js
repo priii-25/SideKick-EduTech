@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './chatbot.css';  // We'll create this next
+import './chatbot.css'; 
 
 function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,6 @@ function Chatbot() {
     if (!message.trim()) return;
 
     setIsLoading(true);
-    // Add user message to chat history
     setChatHistory(prev => [...prev, { type: 'user', content: message }]);
 
     try {
@@ -25,7 +24,6 @@ function Chatbot() {
       });
 
       const data = await response.json();
-      // Add bot response to chat history
       setChatHistory(prev => [...prev, { type: 'bot', content: data.response }]);
     } catch (error) {
       console.error('Error:', error);
@@ -38,7 +36,6 @@ function Chatbot() {
 
   return (
     <div className="chatbot-container">
-      {/* Floating chat icon */}
       <button 
         className={`chat-icon ${isOpen ? 'hidden' : ''}`} 
         onClick={() => setIsOpen(true)}
@@ -46,7 +43,6 @@ function Chatbot() {
         <span role="img" aria-label="chat">💬</span>
       </button>
 
-      {/* Chat window */}
       {isOpen && (
         <div className="chat-window">
           <div className="chat-header">

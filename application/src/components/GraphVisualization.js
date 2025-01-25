@@ -6,7 +6,7 @@ function GraphVisualization() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/graph-data')
+    fetch('http://localhost:5000/api/graph-data')
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -14,22 +14,39 @@ function GraphVisualization() {
         return response.json();
       })
       .then(data => {
-        const uniqueNodeIds = new Set(data.nodes.map(node => node.id));
-        if (uniqueNodeIds.size !== data.nodes.length) {
-          console.error('Duplicate node IDs detected in data');
-          const duplicates = data.nodes.filter((node, index, self) =>
-            self.findIndex(n => n.id === node.id) !== index
+        const uniqueNodes = Array.from(
+          new Map(data.nodes.map(node => [node.id, node])).values()
+        );
+  
+        const uniqueEdges = Array.from(
+          new Map(
+            data.edges.map(edge => [`${edge.from}-${edge.to}`, edge])
+          ).values()
+        );
+  
+        if (uniqueNodes.length !== data.nodes.length) {
+          console.warn(
+            `Duplicate node IDs were removed: ${data.nodes.length - uniqueNodes.length}`
           );
-          console.error('Duplicate nodes:', duplicates);
         }
-        
-        setGraph(data);
+  
+        if (uniqueEdges.length !== data.edges.length) {
+          console.warn(
+            `Duplicate edges were removed: ${data.edges.length - uniqueEdges.length}`
+          );
+        }
+  
+        setGraph({
+          nodes: uniqueNodes,
+          edges: uniqueEdges,
+        });
       })
       .catch(err => {
         console.error('Error fetching graph data:', err);
         setError(err.message);
       });
   }, []);
+   
 
   const options = {
     layout: {

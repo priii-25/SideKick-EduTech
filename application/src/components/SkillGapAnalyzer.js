@@ -13,7 +13,7 @@ const SkillGapAnalyzer = () => {
 
   const initializeSystem = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/initialize');
+      const response = await fetch('http://localhost:8000/initialize');
       const data = await response.json();
       setIsInitialized(true);
     } catch (error) {
@@ -37,7 +37,7 @@ const SkillGapAnalyzer = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/analyze-skills', {
+      const response = await fetch('http://localhost:8000/analyze-skills', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

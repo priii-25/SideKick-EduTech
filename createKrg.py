@@ -189,7 +189,6 @@ if __name__ == "__main__":
 
     analyzer = SkillGapAnalyzer(uri, user, password)
 
-    # Define skill domains and skills within them
     '''domains = {
         "Machine Learning": ["PyTorch", "TensorFlow", "Scikit-learn", "Keras"],
         "DevOps": ["Docker", "Kubernetes", "Terraform", "Jenkins"],
@@ -255,11 +254,9 @@ if __name__ == "__main__":
     for profession, skills in profession_skills.items():
         analyzer.add_profession_skills(profession, skills)'''
 
-    # Define user and their skills
     user_name = "test1"
     user_skills = ["TensorFlow", "Docker", "React", "Kotlin"]
 
-    # Add user and their skills
     analyzer.add_user_skills(user_name, user_skills)
     closest_profession, similarity_score = analyzer.find_closest_profession("test1")
     print(f"closest profession: {closest_profession} with similarity {similarity_score}")

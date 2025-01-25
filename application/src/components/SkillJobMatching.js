@@ -16,22 +16,23 @@ const SkillJobMatching = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const initialHexagons = Array.from({ length: 20 }, (_, i) => ({
-        id: i,
+      const initialHexagons = Array.from({ length: 20 }, () => ({
+        id: `${Date.now()}-${Math.random()}`, 
         left: Math.random() * 100,
         size: 40 + Math.random() * 40,
         animationDuration: 15 + Math.random() * 20,
         delay: Math.random() * -20,
-        opacity: 0.1 + Math.random() * 0.2
+        opacity: 0.1 + Math.random() * 0.2,
       }));
+      
       setHexagons(initialHexagons);
     }, 100);
 
-    fetch('http://localhost:5000/swot-analysis', {
+    fetch('http://localhost:8000/swot-analysis', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        cv_path: 'test.pdf',
+        "cv_path": "C:\\Users\\VICTUS\\SideKick-EduTech\\test.pdf",
         industry_skills: '- Machine Learning\n- Data Visualization'
       })
     })
@@ -48,7 +49,6 @@ const SkillJobMatching = () => {
           throw new Error('SWOT data is missing in the response');
         }
 
-        // Remove any markdown formatting
         const cleanText = data.swot.replace(/\*\*/g, '').replace(/\*/g, '-');
         const lines = cleanText.split('\n').map(line => line.trim()).filter(line => line);
         
